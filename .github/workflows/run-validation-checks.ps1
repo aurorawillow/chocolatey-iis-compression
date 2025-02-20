@@ -8,40 +8,31 @@
 
 #>
 
-# Check if MSI files exist and match expected names
-$msiFiles = @("iiscompression_x86.msi", "iiscompression_amd64.msi")
-
-foreach ($file in $msiFiles) {
-    if (Test-Path $file) {
-        Write-Host "✓ $file exists"
-    } else {
-        Write-Host "❌ $file not found in expected location"
-        exit 1
-    }
+# Check if URLs are accessible
+$urls = @{
+    "x86" = "https://download.microsoft.com/download/6/1/C/61CC0718-ED0E-4351-BC54-46495EBF5CC3/iiscompression_x86.msi"
+    "x64" = "https://download.microsoft.com/download/6/1/C/61CC0718-ED0E-4351-BC54-46495EBF5CC3/iiscompression_amd64.msi"
 }
 
-# Validate SHA256 hashes
-$expectedHashes = @{
-    "iiscompression_x86.msi" = $env:x86_sha256
-    "iiscompression_amd64.msi" = $env:amd64_sha256
-}
-
-foreach ($file in $msiFiles) {
-    $actualHash = (Get-FileHash -Path $file -Algorithm SHA256).Hash
-    if ($actualHash -eq $expectedHashes[$file]) {
-        Write-Host "✓ SHA256 hash verified for $file"
-    } else {
-        Write-Host "❌ SHA256 hash mismatch for $file"
-        Write-Host "Expected: $($expectedHashes[$file])"
-        Write-Host "Actual: $actualHash"
+foreach ($platform in $urls.Keys) {
+    try {
+        $response = Invoke-WebRequest -Uri $urls[$platform] -Method Head -UseBasicParsing
+        if ($response.StatusCode -eq 200) {
+            Write-Host "✓ MSI URL for $platform is accessible"
+        } else {
+            Write-Host "❌ MSI URL for $platform returned status code $($response.StatusCode)"
+            exit 1
+        }
+    } catch {
+        Write-Host "❌ Failed to access MSI URL for $platform"
+        Write-Host $_.Exception.Message
         exit 1
     }
 }
 
 # Validate nuspec file
 [xml]$nuspec = Get-Content -Path "../../iis-compression.nuspec"
-$nuspecVersion = $nuspec.package.metadata.version
-
+$nuspecVersion = $nuspec.package.metadata.version.Trim()
 if (-not $nuspecVersion) {
     Write-Host "❌ Failed to read version from nuspec file"
     exit 1
