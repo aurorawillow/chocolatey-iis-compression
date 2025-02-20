@@ -44,8 +44,37 @@ $amd64_url = $urls -match 'iiscompression_amd64\.msi'
 $x86_msi_path = Join-Path -Path $TEMP -ChildPath $x86_msi
 $amd64_msi_path = Join-Path -Path $TEMP -ChildPath $amd64_msi
 
-Invoke-WebRequest -Uri "$x86_url" -OutFile $x86_msi_path
-Invoke-WebRequest -Uri "$amd64_url" -OutFile $amd64_msi_path
+function Download-FileWithRetry {
+    param (
+        [string]$Uri,
+        [string]$OutFile,
+        [int]$MaxRetries = 3,
+        [int]$RetryDelaySeconds = 10
+    )
+    
+    for ($i = 1; $i -le $MaxRetries; $i++) {
+        try {
+            Write-Output "Attempt $i of $MaxRetries to download $Uri"
+            Invoke-WebRequest -Uri $Uri -OutFile $OutFile -UseBasicParsing
+            return $true
+        }
+        catch {
+            Write-Output "Download attempt $i failed: $_"
+            if ($i -lt $MaxRetries) {
+                Write-Output "Waiting $RetryDelaySeconds seconds before retry..."
+                Start-Sleep -Seconds $RetryDelaySeconds
+            }
+            else {
+                throw "Failed to download after $MaxRetries attempts: $_"
+            }
+        }
+    }
+}
+
+Write-Output "Downloading x86 MSI..."
+Download-FileWithRetry -Uri $x86_url -OutFile $x86_msi_path
+Write-Output "Downloading x64 MSI..."
+Download-FileWithRetry -Uri $amd64_url -OutFile $amd64_msi_path
 
 $x86_hash = (Get-FileHash -Path $x86_msi_path -Algorithm SHA256).Hash
 $amd64_hash = (Get-FileHash -Path $amd64_msi_path -Algorithm SHA256).Hash
