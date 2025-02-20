@@ -146,6 +146,7 @@ if ($x86_hash -eq $x86_sha256 -and $amd64_hash -eq $amd64_sha256) {
     "x64_msi=$amd64_msi" >> $env:GITHUB_ENV
     "amd64_sha256=$amd64_sha256" >> $env:GITHUB_ENV
     "nuspec_version=$msiVersion" >> $env:GITHUB_ENV
+    "version=$msiVersion" >> $env:GITHUB_OUTPUT
     
     # Return true to indicate update was performed
     Write-Output $true
