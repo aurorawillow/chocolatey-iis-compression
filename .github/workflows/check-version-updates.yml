@@ -1,28 +1,20 @@
-name: Scheduled Package Maintenance
-
+name: Check Version Updates
 on:
   schedule:
-    - cron: '0 0 15 * *' # Every 15th day
-  workflow_dispatch:
-  push:
-    branches:
-      - main
-  pull_request:
-    types:
-      - opened
+    - cron: '0 0 1 * *'  # Run on the 1st of every month
+  workflow_dispatch:  # Allow manual trigger
 
 jobs:
-  update:
+  check-updates:
     runs-on: windows-latest
     env:
       PACKAGE_UPDATED: 'false'
     outputs:
       package_version: ${{ steps.update-script.outputs.version }}
-
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-
+      
     - name: Run update package script
       id: update-script
       run: |
@@ -32,7 +24,7 @@ jobs:
           echo "version=$env:nuspec_version" >> $env:GITHUB_OUTPUT
         }
       working-directory: .github\workflows
-
+      
     - name: Run validation checks
       if: env.PACKAGE_UPDATED == 'true'
       env:
@@ -42,7 +34,7 @@ jobs:
       run: |
         ./run-validation-checks.ps1
       working-directory: .github\workflows
-
+      
     - name: Create Pull Request
       if: env.PACKAGE_UPDATED == 'true' && success()
       uses: peter-evans/create-pull-request@v5
@@ -56,19 +48,3 @@ jobs:
         branch: "feature/update-package-${{ github.run_number }}"
         commit-message: "Update package to version ${{ steps.update-script.outputs.version }}"
         delete-branch: true
-
-    - name: Install Chocolatey
-      if: env.PACKAGE_UPDATED == 'true' && github.ref == 'refs/heads/main' && success()
-      run: |
-        Set-ExecutionPolicy Bypass -Scope Process -Force
-        iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
-
-    - name: Add API Key
-      if: env.PACKAGE_UPDATED == 'true' && github.ref == 'refs/heads/main' && success()
-      run: choco apikey add --source "https://chocolatey.org/" --key "${{ secrets.CHOCO_API_KEY }}"
-
-    - name: Pack and Push Package
-      if: env.PACKAGE_UPDATED == 'true' && github.ref == 'refs/heads/main' && success()
-      run: |
-        choco pack
-        choco push iis-compression.nupkg --source "https://push.chocolatey.org/"
