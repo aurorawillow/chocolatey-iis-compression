@@ -15,6 +15,14 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
+    - name: Cache Chocolatey packages
+      uses: actions/cache@v3
+      with:
+        path: C:\Users\runneradmin\AppData\Local\Temp\chocolatey
+        key: ${{ runner.os }}-chocolatey-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-chocolatey-
+      
     - name: Run update package script
       id: update-script
       run: |
@@ -34,6 +42,18 @@ jobs:
       run: |
         ./run-validation-checks.ps1
       working-directory: .github\workflows
+
+    - name: Test package installation
+      if: env.PACKAGE_UPDATED == 'true'
+      run: |
+        choco pack
+        choco install iis-compression -y -s .
+        if (-not (Test-Path "$env:ProgramFiles\IIS\IIS Compression\iisbrotli.dll")) {
+          throw "Installation failed: iisbrotli.dll not found"
+        }
+        if (-not (Test-Path "$env:ProgramFiles\IIS\IIS Compression\iiszlib.dll")) {
+          throw "Installation failed: iiszlib.dll not found"
+        }
       
     - name: Create Pull Request
       if: env.PACKAGE_UPDATED == 'true' && success()
@@ -45,6 +65,7 @@ jobs:
           - Updated to version ${{ steps.update-script.outputs.version }}
           - Validated MSI files and checksums
           - Updated URLs and checksums in install script
+          - Tested package installation
         branch: "feature/update-package-${{ github.run_number }}"
         commit-message: "Update package to version ${{ steps.update-script.outputs.version }}"
         delete-branch: true

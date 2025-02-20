@@ -14,6 +14,14 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
+    - name: Cache Chocolatey packages
+      uses: actions/cache@v3
+      with:
+        path: C:\Users\runneradmin\AppData\Local\Temp\chocolatey
+        key: ${{ runner.os }}-chocolatey-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-chocolatey-
+
     - name: Install Chocolatey
       run: |
         Set-ExecutionPolicy Bypass -Scope Process -Force
@@ -22,7 +30,19 @@ jobs:
     - name: Add API Key
       run: choco apikey add --source "https://chocolatey.org/" --key "${{ secrets.CHOCO_API_KEY }}"
 
-    - name: Pack and Push Package
+    - name: Pack Package
+      run: choco pack
+
+    - name: Test Package Installation
       run: |
-        choco pack
-        choco push iis-compression.nupkg --source "https://push.chocolatey.org/"
+        choco install iis-compression -y -s .
+        if (-not (Test-Path "$env:ProgramFiles\IIS\IIS Compression\iisbrotli.dll")) {
+          throw "Installation failed: iisbrotli.dll not found"
+        }
+        if (-not (Test-Path "$env:ProgramFiles\IIS\IIS Compression\iiszlib.dll")) {
+          throw "Installation failed: iiszlib.dll not found"
+        }
+
+    - name: Push Package
+      if: success()
+      run: choco push iis-compression.nupkg --source "https://push.chocolatey.org/"
