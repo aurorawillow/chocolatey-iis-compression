@@ -83,16 +83,18 @@ if ($x86_hash -eq $x86_sha256 -and $amd64_hash -eq $amd64_sha256) {
   $msiVersion = $msiVersion -replace '(\d+)\.(\d+)\.0*(\d+)', '$1.$2.$3'
   Write-Output "`tFixed version - $msiVersion"
 
+  $packageUpdated = $false  # Changed to boolean and consistent naming
+
   if ($msiVersion -eq $nuspecVersion) {
     Write-Output "MSI and nuspec versions match."
-    $updated = 'false'
+    $packageUpdated = $false
   }
   else {
     Write-Output "MSI and nuspec versions do not match. Please update."
-    $updated = 'true'
+    $packageUpdated = $true
   }
 
-  if ($updated -eq 'true') {
+  if ($packageUpdated) {
     Write-Output "Updating nuspec file with new version $msiVersion"
     $nuspecContent.package.metadata.version = $msiVersion
     $nuspecContent.package.metadata.licenseUrl = $response.license.url
@@ -109,14 +111,20 @@ if ($x86_hash -eq $x86_sha256 -and $amd64_hash -eq $amd64_sha256) {
     $content = $content -replace 'checksum64 = .*', "checksum64 = '$amd64_hash'"
     Set-Content -Path "..\..\tools\chocolateyinstall.ps1" -Value $content
 
-    Write-Output "x86_msi=$x86_msi" >> $GITHUB_ENV
-    Write-Output "x86_sha256=$x86_sha256" >> $GITHUB_ENV
-    Write-Output "x64_msi=$amd64_msi" >> $GITHUB_ENV
-    Write-Output "amd64_sha256=$amd64_sha256" >> $GITHUB_ENV
-    Write-Output "updated=$updated" >> $GITHUB_ENV
+    # Set environment variables with consistent naming
+    "x86_msi=$x86_msi" >> $env:GITHUB_ENV
+    "x86_sha256=$x86_sha256" >> $env:GITHUB_ENV
+    "x64_msi=$amd64_msi" >> $env:GITHUB_ENV
+    "amd64_sha256=$amd64_sha256" >> $env:GITHUB_ENV
+    "nuspec_version=$msiVersion" >> $env:GITHUB_ENV
+    
+    # Return true to indicate update was performed
+    Write-Output $true
+    exit 0
   }
-  elseif ($updated -eq 'false') {
+  else {
     Write-Output "There is no need to update, exiting."
+    Write-Output $false
     exit 0
   }
 }
