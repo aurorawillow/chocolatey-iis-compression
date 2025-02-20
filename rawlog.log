@@ -1,0 +1,137 @@
+2025-02-20T07:03:14.4479730Z Current runner version: '2.322.0'
+2025-02-20T07:03:14.4502004Z ##[group]Operating System
+2025-02-20T07:03:14.4502731Z Microsoft Windows Server 2022
+2025-02-20T07:03:14.4503297Z 10.0.20348
+2025-02-20T07:03:14.4503706Z Datacenter
+2025-02-20T07:03:14.4504131Z ##[endgroup]
+2025-02-20T07:03:14.4504586Z ##[group]Runner Image
+2025-02-20T07:03:14.4505082Z Image: windows-2022
+2025-02-20T07:03:14.4505559Z Version: 20250209.1.0
+2025-02-20T07:03:14.4506555Z Included Software: https://github.com/actions/runner-images/blob/win22/20250209.1/images/windows/Windows2022-Readme.md
+2025-02-20T07:03:14.4507854Z Image Release: https://github.com/actions/runner-images/releases/tag/win22%2F20250209.1
+2025-02-20T07:03:14.4508691Z ##[endgroup]
+2025-02-20T07:03:14.4509152Z ##[group]Runner Image Provisioner
+2025-02-20T07:03:14.4509693Z 2.0.422.1
+2025-02-20T07:03:14.4510100Z ##[endgroup]
+2025-02-20T07:03:14.4512314Z ##[group]GITHUB_TOKEN Permissions
+2025-02-20T07:03:14.4514420Z Actions: write
+2025-02-20T07:03:14.4514978Z Attestations: write
+2025-02-20T07:03:14.4515461Z Checks: write
+2025-02-20T07:03:14.4515930Z Contents: write
+2025-02-20T07:03:14.4516384Z Deployments: write
+2025-02-20T07:03:14.4516860Z Discussions: write
+2025-02-20T07:03:14.4517322Z Issues: write
+2025-02-20T07:03:14.4517737Z Metadata: read
+2025-02-20T07:03:14.4518200Z Packages: write
+2025-02-20T07:03:14.4518672Z Pages: write
+2025-02-20T07:03:14.4519097Z PullRequests: write
+2025-02-20T07:03:14.4519603Z RepositoryProjects: write
+2025-02-20T07:03:14.4520123Z SecurityEvents: write
+2025-02-20T07:03:14.4520594Z Statuses: write
+2025-02-20T07:03:14.4521054Z ##[endgroup]
+2025-02-20T07:03:14.4523645Z Secret source: Actions
+2025-02-20T07:03:14.4524305Z Prepare workflow directory
+2025-02-20T07:03:14.4862078Z Prepare all required actions
+2025-02-20T07:03:14.4898485Z Getting action download info
+2025-02-20T07:03:14.7286423Z ##[group]Download immutable action package 'actions/checkout@v4'
+2025-02-20T07:03:14.7287501Z Version: 4.2.2
+2025-02-20T07:03:14.7288454Z Digest: sha256:ccb2698953eaebd21c7bf6268a94f9c26518a7e38e27e0b83c1fe1ad049819b1
+2025-02-20T07:03:14.7289641Z Source commit SHA: 11bd71901bbe5b1630ceea73d27597364c9af683
+2025-02-20T07:03:14.7290387Z ##[endgroup]
+2025-02-20T07:03:14.9360839Z Download action repository 'peter-evans/create-pull-request@v5' (SHA:4e1beaa7521e8b457b572c090b25bd3db56bf1c5)
+2025-02-20T07:03:15.4105924Z Complete job name: update
+2025-02-20T07:03:15.5178506Z ##[group]Run actions/checkout@v4
+2025-02-20T07:03:15.5179533Z with:
+2025-02-20T07:03:15.5180047Z   repository: srjennings/chocolatey-iis-compression
+2025-02-20T07:03:15.5180885Z   token: ***
+2025-02-20T07:03:15.5181303Z   ssh-strict: true
+2025-02-20T07:03:15.5181734Z   ssh-user: git
+2025-02-20T07:03:15.5182179Z   persist-credentials: true
+2025-02-20T07:03:15.5182704Z   clean: true
+2025-02-20T07:03:15.5183138Z   sparse-checkout-cone-mode: true
+2025-02-20T07:03:15.5183651Z   fetch-depth: 1
+2025-02-20T07:03:15.5184074Z   fetch-tags: false
+2025-02-20T07:03:15.5184543Z   show-progress: true
+2025-02-20T07:03:15.5184977Z   lfs: false
+2025-02-20T07:03:15.5185375Z   submodules: false
+2025-02-20T07:03:15.5185814Z   set-safe-directory: true
+2025-02-20T07:03:15.5186464Z env:
+2025-02-20T07:03:15.5186873Z   PACKAGE_UPDATED: false
+2025-02-20T07:03:15.5187329Z ##[endgroup]
+2025-02-20T07:03:16.3197653Z Syncing repository: srjennings/chocolatey-iis-compression
+2025-02-20T07:03:16.3448466Z ##[group]Getting Git version info
+2025-02-20T07:03:16.3449981Z Working directory is 'D:\a\chocolatey-iis-compression\chocolatey-iis-compression'
+2025-02-20T07:03:16.6891476Z [command]"C:\Program Files\Git\bin\git.exe" version
+2025-02-20T07:03:16.8478887Z git version 2.47.1.windows.2
+2025-02-20T07:03:16.8492270Z ##[endgroup]
+2025-02-20T07:03:16.8682054Z Temporarily overriding HOME='D:\a\_temp\c4991ba8-a43e-43b3-a97e-f1f512bb4fe9' before making global git config changes
+2025-02-20T07:03:16.8685469Z Adding repository directory to the temporary git global config as a safe directory
+2025-02-20T07:03:16.8694551Z [command]"C:\Program Files\Git\bin\git.exe" config --global --add safe.directory D:\a\chocolatey-iis-compression\chocolatey-iis-compression
+2025-02-20T07:03:16.9499718Z Deleting the contents of 'D:\a\chocolatey-iis-compression\chocolatey-iis-compression'
+2025-02-20T07:03:16.9504650Z ##[group]Initializing the repository
+2025-02-20T07:03:16.9514832Z [command]"C:\Program Files\Git\bin\git.exe" init D:\a\chocolatey-iis-compression\chocolatey-iis-compression
+2025-02-20T07:03:17.0420977Z Initialized empty Git repository in D:/a/chocolatey-iis-compression/chocolatey-iis-compression/.git/
+2025-02-20T07:03:17.0458820Z [command]"C:\Program Files\Git\bin\git.exe" remote add origin https://github.com/srjennings/chocolatey-iis-compression
+2025-02-20T07:03:17.1213284Z ##[endgroup]
+2025-02-20T07:03:17.1215721Z ##[group]Disabling automatic garbage collection
+2025-02-20T07:03:17.1224463Z [command]"C:\Program Files\Git\bin\git.exe" config --local gc.auto 0
+2025-02-20T07:03:17.1461990Z ##[endgroup]
+2025-02-20T07:03:17.1464359Z ##[group]Setting up auth
+2025-02-20T07:03:17.1474728Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp core\.sshCommand
+2025-02-20T07:03:17.1771424Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\""
+2025-02-20T07:03:19.2701842Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-02-20T07:03:19.2939291Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\""
+2025-02-20T07:03:19.6776478Z [command]"C:\Program Files\Git\bin\git.exe" config --local http.https://github.com/.extraheader "AUTHORIZATION: basic ***"
+2025-02-20T07:03:19.7001259Z ##[endgroup]
+2025-02-20T07:03:19.7001963Z ##[group]Fetching the repository
+2025-02-20T07:03:19.7014661Z [command]"C:\Program Files\Git\bin\git.exe" -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +cc9c74c5ef453ca7a8422f522f73029db4f92eea:refs/remotes/origin/main
+2025-02-20T07:03:22.1214679Z From https://github.com/srjennings/chocolatey-iis-compression
+2025-02-20T07:03:22.1215527Z  * [new ref]         cc9c74c5ef453ca7a8422f522f73029db4f92eea -> origin/main
+2025-02-20T07:03:22.1747893Z ##[endgroup]
+2025-02-20T07:03:22.1748519Z ##[group]Determining the checkout info
+2025-02-20T07:03:22.1751804Z ##[endgroup]
+2025-02-20T07:03:22.1763379Z [command]"C:\Program Files\Git\bin\git.exe" sparse-checkout disable
+2025-02-20T07:03:22.2398725Z [command]"C:\Program Files\Git\bin\git.exe" config --local --unset-all extensions.worktreeConfig
+2025-02-20T07:03:22.2605508Z ##[group]Checking out the ref
+2025-02-20T07:03:22.2617819Z [command]"C:\Program Files\Git\bin\git.exe" checkout --progress --force -B main refs/remotes/origin/main
+2025-02-20T07:03:22.3334226Z branch 'main' set up to track 'origin/main'.
+2025-02-20T07:03:22.3337941Z Switched to a new branch 'main'
+2025-02-20T07:03:22.3362521Z ##[endgroup]
+2025-02-20T07:03:22.3692500Z [command]"C:\Program Files\Git\bin\git.exe" log -1 --format=%H
+2025-02-20T07:03:22.3883077Z cc9c74c5ef453ca7a8422f522f73029db4f92eea
+2025-02-20T07:03:22.4175558Z ##[group]Run $result = ./update-package.ps1
+2025-02-20T07:03:22.4176011Z [36;1m$result = ./update-package.ps1[0m
+2025-02-20T07:03:22.4176347Z [36;1mif ($LASTEXITCODE -eq 0 -and $result -eq $true) {[0m
+2025-02-20T07:03:22.4176720Z [36;1m  echo "PACKAGE_UPDATED=true" >> $env:GITHUB_ENV[0m
+2025-02-20T07:03:22.4177084Z [36;1m  echo "version=$env:nuspec_version" >> $env:GITHUB_OUTPUT[0m
+2025-02-20T07:03:22.4177385Z [36;1m}[0m
+2025-02-20T07:03:22.4214080Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+2025-02-20T07:03:22.4214419Z env:
+2025-02-20T07:03:22.4215319Z   PACKAGE_UPDATED: false
+2025-02-20T07:03:22.4215553Z ##[endgroup]
+2025-02-20T07:03:24.9027804Z Updating Chocolatey Install Script
+2025-02-20T07:03:26.0274653Z ##[group]Run ./run-validation-checks.ps1
+2025-02-20T07:03:26.0275023Z [36;1m./run-validation-checks.ps1[0m
+2025-02-20T07:03:26.0305409Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+2025-02-20T07:03:26.0305732Z env:
+2025-02-20T07:03:26.0305907Z   PACKAGE_UPDATED: true
+2025-02-20T07:03:26.0306108Z   x86_sha256: 
+2025-02-20T07:03:26.0306272Z   amd64_sha256: 
+2025-02-20T07:03:26.0306442Z   nuspec_version: 
+2025-02-20T07:03:26.0306614Z ##[endgroup]
+2025-02-20T07:03:26.3205915Z ❌ iiscompression_x86.msi not found in expected location
+2025-02-20T07:03:26.3642868Z ##[error]Process completed with exit code 1.
+2025-02-20T07:03:26.3829647Z Post job cleanup.
+2025-02-20T07:03:26.5932036Z [command]"C:\Program Files\Git\bin\git.exe" version
+2025-02-20T07:03:26.6160670Z git version 2.47.1.windows.2
+2025-02-20T07:03:26.6240220Z Temporarily overriding HOME='D:\a\_temp\ba1fe9b6-f8dc-43ee-9e2b-2ceb782cc531' before making global git config changes
+2025-02-20T07:03:26.6240912Z Adding repository directory to the temporary git global config as a safe directory
+2025-02-20T07:03:26.6256226Z [command]"C:\Program Files\Git\bin\git.exe" config --global --add safe.directory D:\a\chocolatey-iis-compression\chocolatey-iis-compression
+2025-02-20T07:03:26.6512138Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp core\.sshCommand
+2025-02-20T07:03:26.6750964Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\""
+2025-02-20T07:03:27.0626300Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-02-20T07:03:27.0880012Z http.https://github.com/.extraheader
+2025-02-20T07:03:27.0917407Z [command]"C:\Program Files\Git\bin\git.exe" config --local --unset-all http.https://github.com/.extraheader
+2025-02-20T07:03:27.1159858Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\""
+2025-02-20T07:03:27.5212592Z Evaluate and set job outputs
+2025-02-20T07:03:27.5219145Z Cleaning up orphan processes
