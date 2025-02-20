@@ -9,42 +9,66 @@ on:
       - main
   pull_request:
     types:
-      - opened # pull request
+      - opened
 
 jobs:
   update:
     runs-on: windows-latest
+    env:
+      PACKAGE_UPDATED: 'false'
+    outputs:
+      package_version: ${{ steps.update-script.outputs.version }}
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
     - name: Run update package script
-      run: ./update-package.ps1
+      id: update-script
+      run: |
+        $result = ./update-package.ps1
+        if ($LASTEXITCODE -eq 0 -and $result -eq $true) {
+          echo "PACKAGE_UPDATED=true" >> $env:GITHUB_ENV
+          echo "version=$env:nuspec_version" >> $env:GITHUB_OUTPUT
+        }
       working-directory: .github\workflows
 
-    # Create Pull Request
+    - name: Run validation checks
+      if: env.PACKAGE_UPDATED == 'true'
+      env:
+        x86_sha256: ${{ env.x86_sha256 }}
+        amd64_sha256: ${{ env.amd64_sha256 }}
+        nuspec_version: ${{ steps.update-script.outputs.version }}
+      run: |
+        ./run-validation-checks.ps1
+      working-directory: .github\workflows
+
     - name: Create Pull Request
-      if: env.updated == 'true'
+      if: env.PACKAGE_UPDATED == 'true' && success()
       uses: peter-evans/create-pull-request@v5
       with:
-        title: "Update Package"
-        body: "This is an automated pull request to update the package."
+        title: "Update IIS Compression Package to ${{ steps.update-script.outputs.version }}"
+        body: |
+          Automated package update via GitHub Actions
+          - Updated to version ${{ steps.update-script.outputs.version }}
+          - Validated MSI files and checksums
+          - Updated URLs and checksums in install script
         branch: "feature/update-package-${{ github.run_number }}"
+        commit-message: "Update package to version ${{ steps.update-script.outputs.version }}"
+        delete-branch: true
 
-    # Install Chocolatey
     - name: Install Chocolatey
-      if: env.updated == 'true'
+      if: env.PACKAGE_UPDATED == 'true' && github.ref == 'refs/heads/main' && success()
       run: |
         Set-ExecutionPolicy Bypass -Scope Process -Force
         iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
 
-    # Add API Key for Chocolatey
     - name: Add API Key
-      if: env.updated == 'true'
-      run: choco apikey add --source "https://push.chocolatey.org/" --key "${{ secrets.CHOCO_API_KEY }}"
+      if: env.PACKAGE_UPDATED == 'true' && github.ref == 'refs/heads/main' && success()
+      run: choco apikey add --source "https://chocolatey.org/" --key "${{ secrets.CHOCO_API_KEY }}"
 
-    # Push Chocolatey Package
-    - name: Push Package
-      if: env.updated == 'true'
-      run: choco push iis-compression.nupkg --source "https://push.chocolatey.org/"
+    - name: Pack and Push Package
+      if: env.PACKAGE_UPDATED == 'true' && github.ref == 'refs/heads/main' && success()
+      run: |
+        choco pack
+        choco push iis-compression.nupkg --source "https://push.chocolatey.org/"
