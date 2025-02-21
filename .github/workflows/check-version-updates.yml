@@ -10,7 +10,7 @@ jobs:
     env:
       PACKAGE_UPDATED: 'false'
     outputs:
-      package_version: ${{ steps.update-script.outputs.version }}
+      package_version: ${{ steps.update-script.outputs.version }} # utilize the output from the update-script step
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -31,6 +31,8 @@ jobs:
           if ($LASTEXITCODE -eq 0 -and $result -eq $true) {
             echo "PACKAGE_UPDATED=true" >> $env:GITHUB_ENV
             echo "version=$env:nuspec_version" >> $env:GITHUB_OUTPUT
+          } else {
+            Write-Host "No updates found"
           }
         }
         catch {
