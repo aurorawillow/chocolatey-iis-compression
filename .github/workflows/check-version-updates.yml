@@ -15,14 +15,6 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Cache Chocolatey packages
-      uses: actions/cache@v3
-      with:
-        path: C:\Users\runneradmin\AppData\Local\Temp\chocolatey
-        key: ${{ runner.os }}-chocolatey-${{ github.sha }}
-        restore-keys: |
-          ${{ runner.os }}-chocolatey-
-      
     - name: Run update package script
       id: update-script
       run: |
