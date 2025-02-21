@@ -12,7 +12,7 @@ jobs:
   analyze:
     name: Analyze
     runs-on: windows-latest
-    timeout-minutes: 360
+    timeout-minutes: 60  # Reduced from 360 as this is typically sufficient
     permissions:
       security-events: write
       actions: read
@@ -23,11 +23,11 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@v2
+      uses: github/codeql-action/init@v3
       with:
-        languages: 'javascript'  # Add other languages if needed
+        languages: 'javascript'
 
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v2
+      uses: github/codeql-action/analyze@v3
       with:
-        category: "/language:javascript"
+        category: "/language:powershell"
