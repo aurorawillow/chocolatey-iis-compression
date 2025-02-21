@@ -26,12 +26,33 @@ jobs:
     - name: Run update package script
       id: update-script
       run: |
-        $result = ./update-package.ps1
-        if ($LASTEXITCODE -eq 0 -and $result -eq $true) {
-          echo "PACKAGE_UPDATED=true" >> $env:GITHUB_ENV
-          echo "version=$env:nuspec_version" >> $env:GITHUB_OUTPUT
+        try {
+          $result = ./update-package.ps1
+          if ($LASTEXITCODE -eq 0 -and $result -eq $true) {
+            echo "PACKAGE_UPDATED=true" >> $env:GITHUB_ENV
+            echo "version=$env:nuspec_version" >> $env:GITHUB_OUTPUT
+          }
+        }
+        catch {
+          Write-Error "Failed to run update script: $_"
+          exit 1
         }
       working-directory: .github\workflows
+      
+    - name: Update Nuspec Version
+      if: env.PACKAGE_UPDATED == 'true'
+      run: |
+        try {
+          [xml]$nuspec = Get-Content -Path "iis-compression.nuspec"
+          $version = $env:nuspec_version
+          $nuspec.package.metadata.version = $version
+          $nuspec.Save("iis-compression.nuspec")
+          Write-Host "Successfully updated nuspec version to $version"
+        }
+        catch {
+          Write-Error "Failed to update nuspec version: $_"
+          exit 1
+        }
       
     - name: Run validation checks
       if: env.PACKAGE_UPDATED == 'true'
@@ -40,19 +61,32 @@ jobs:
         amd64_sha256: ${{ env.amd64_sha256 }}
         nuspec_version: ${{ steps.update-script.outputs.version }}
       run: |
-        ./run-validation-checks.ps1
+        try {
+          ./run-validation-checks.ps1
+        }
+        catch {
+          Write-Error "Validation checks failed: $_"
+          exit 1
+        }
       working-directory: .github\workflows
 
     - name: Test package installation
       if: env.PACKAGE_UPDATED == 'true'
       run: |
-        choco pack
-        choco install iis-compression -y -s .
-        if (-not (Test-Path "$env:ProgramFiles\IIS\IIS Compression\iisbrotli.dll")) {
-          throw "Installation failed: iisbrotli.dll not found"
+        try {
+          choco pack
+          choco install iis-compression -y -s .
+          if (-not (Test-Path "$env:ProgramFiles\IIS\IIS Compression\iisbrotli.dll")) {
+            throw "Installation failed: iisbrotli.dll not found"
+          }
+          if (-not (Test-Path "$env:ProgramFiles\IIS\IIS Compression\iiszlib.dll")) {
+            throw "Installation failed: iiszlib.dll not found"
+          }
+          Write-Host "Package installation test completed successfully"
         }
-        if (-not (Test-Path "$env:ProgramFiles\IIS\IIS Compression\iiszlib.dll")) {
-          throw "Installation failed: iiszlib.dll not found"
+        catch {
+          Write-Error "Package installation test failed: $_"
+          exit 1
         }
       
     - name: Create Pull Request
@@ -63,6 +97,7 @@ jobs:
         body: |
           Automated package update via GitHub Actions
           - Updated to version ${{ steps.update-script.outputs.version }}
+          - Updated version in nuspec file
           - Validated MSI files and checksums
           - Updated URLs and checksums in install script
           - Tested package installation
