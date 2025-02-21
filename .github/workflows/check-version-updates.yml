@@ -31,8 +31,6 @@ jobs:
           if ($LASTEXITCODE -eq 0 -and $result -eq $true) {
             echo "PACKAGE_UPDATED=true" >> $env:GITHUB_ENV
             echo "version=$env:nuspec_version" >> $env:GITHUB_OUTPUT
-          } else {
-            Write-Host "No updates found"
           }
         }
         catch {
