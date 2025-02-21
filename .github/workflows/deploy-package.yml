@@ -24,25 +24,85 @@ jobs:
 
     - name: Install Chocolatey
       run: |
-        Set-ExecutionPolicy Bypass -Scope Process -Force
-        iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
+        try {
+          Set-ExecutionPolicy Bypass -Scope Process -Force
+          iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
+          Write-Host "Chocolatey installed successfully"
+        }
+        catch {
+          Write-Error "Failed to install Chocolatey: $_"
+          exit 1
+        }
+
+    - name: Verify Nuspec Version
+      run: |
+        try {
+          [xml]$nuspec = Get-Content -Path "iis-compression.nuspec"
+          $version = $nuspec.package.metadata.version
+          Write-Host "Deploying version: $version"
+          echo "PACKAGE_VERSION=$version" >> $env:GITHUB_ENV
+        }
+        catch {
+          Write-Error "Failed to read nuspec version: $_"
+          exit 1
+        }
 
     - name: Add API Key
-      run: choco apikey add --source "https://chocolatey.org/" --key "${{ secrets.CHOCO_API_KEY }}"
+      run: |
+        try {
+          choco apikey add --source "https://chocolatey.org/" --key "${{ secrets.CHOCO_API_KEY }}"
+          Write-Host "API key added successfully"
+        }
+        catch {
+          Write-Error "Failed to add Chocolatey API key: $_"
+          exit 1
+        }
 
     - name: Pack Package
-      run: choco pack
+      run: |
+        try {
+          choco pack
+          Write-Host "Package packed successfully"
+        }
+        catch {
+          Write-Error "Failed to pack package: $_"
+          exit 1
+        }
 
     - name: Test Package Installation
       run: |
-        choco install iis-compression -y -s .
-        if (-not (Test-Path "$env:ProgramFiles\IIS\IIS Compression\iisbrotli.dll")) {
-          throw "Installation failed: iisbrotli.dll not found"
+        try {
+          choco install iis-compression -y -s .
+          if (-not (Test-Path "$env:ProgramFiles\IIS\IIS Compression\iisbrotli.dll")) {
+            throw "Installation failed: iisbrotli.dll not found"
+          }
+          if (-not (Test-Path "$env:ProgramFiles\IIS\IIS Compression\iiszlib.dll")) {
+            throw "Installation failed: iiszlib.dll not found"
+          }
+          Write-Host "Package installation test completed successfully"
         }
-        if (-not (Test-Path "$env:ProgramFiles\IIS\IIS Compression\iiszlib.dll")) {
-          throw "Installation failed: iiszlib.dll not found"
+        catch {
+          Write-Error "Package installation test failed: $_"
+          exit 1
         }
 
     - name: Push Package
       if: success()
-      run: choco push iis-compression.nupkg --source "https://push.chocolatey.org/"
+      run: |
+        try {
+          choco push iis-compression.nupkg --source "https://push.chocolatey.org/"
+          Write-Host "Successfully pushed version ${{ env.PACKAGE_VERSION }} to Chocolatey"
+        }
+        catch {
+          Write-Error "Failed to push package to Chocolatey: $_"
+          exit 1
+        }
+
+    - name: Create Release
+      if: success()
+      uses: softprops/action-gh-release@v1
+      with:
+        name: "v${{ env.PACKAGE_VERSION }}"
+        tag_name: "v${{ env.PACKAGE_VERSION }}"
+        generate_release_notes: true
+        token: ${{ secrets.GITHUB_TOKEN }}
