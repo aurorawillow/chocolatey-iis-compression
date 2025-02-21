@@ -1,4 +1,4 @@
-name: "CodeQL Analysis"
+name: "PowerShell Analysis"
 
 on:
   push:
@@ -12,22 +12,24 @@ jobs:
   analyze:
     name: Analyze
     runs-on: windows-latest
-    timeout-minutes: 60  # Reduced from 360 as this is typically sufficient
-    permissions:
-      security-events: write
-      actions: read
-      contents: read
+    timeout-minutes: 30
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Initialize CodeQL
-      uses: github/codeql-action/init@v3
-      with:
-        languages: 'javascript'
+    - name: Install PSScriptAnalyzer
+      shell: pwsh
+      run: |
+        Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser
 
-    - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v3
-      with:
-        category: "/language:powershell"
+    - name: Run PSScriptAnalyzer
+      shell: pwsh
+      run: |
+        $results = Invoke-ScriptAnalyzer -Path . -Recurse
+        $results | ForEach-Object {
+          Write-Output "::warning file=$($_.ScriptPath),line=$($_.Line),col=$($_.Column)::$($_.RuleName) - $($_.Message)"
+        }
+        if ($results) {
+          exit 1
+        }
