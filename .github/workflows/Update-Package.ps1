@@ -1,57 +1,62 @@
-<#
+﻿#
 .SYNOPSIS
-    Updates the IIS Compression Chocolatey package with the latest version.
-
+Updates the IIS Compression Chocolatey package with the latest version.
 .DESCRIPTION
-    This script downloads the latest IIS Compression MSI installers from the GitHub releases page, 
-    calculates the SHA256 hash, extracts the version number, and updates the nuspec file.
-
-    It is intended to be run as part of a GitHub workflow to keep the package up-to-date.
-
+This script downloads the latest IIS Compression MSI installers from the GitHub releases page,
+calculates the SHA256 hash, extracts the version number, and updates the nuspec file.
+It is intended to be run as part of a GitHub workflow to keep the package up-to-date.
 .LINK
-    https://github.com/microsoft/IIS.Compression
-
+https://github.com/microsoft/IIS.Compression
 #>
 
 $TEMP = [System.IO.Path]::GetTempPath()
 
-$updated = 'False'
+$packageUpdated = $false
+
+# Read the current version from nuspec file
+[xml]$nuspec = Get-Content -Path "../../iis-compression.nuspec"
+$version = $nuspec.package.metadata.version.Trim()
+if (-not $version) {
+    Write-Output "❌ Failed to read version from nuspec file"
+    exit 1
+}
+
+# Set the version as an output for GitHub Actions
+"version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+# Set it as an environment variable for other steps to use
+$env:nuspec_version = $version
+Write-Output "✓ Package version: $version"
 
 $response = Invoke-RestMethod -Uri 'https://api.github.com/repos/microsoft/IIS.Compression/releases/latest'
 $bodyContent = $response.body
-
 $fileNameMatches = [regex]::Matches($bodyContent, '\|\s*(.*?)\s*\|\s*(.*?)\s*\|')
 $urlMatches = [regex]::Matches($bodyContent, 'https://download\.microsoft\.com/download/[^\s]*\.msi')
-
 $results = $fileNameMatches | ForEach-Object {
-  [PSCustomObject]@{
-    'File Name' = $_.Groups[1].Value
-    'Sha256Sum' = $_.Groups[2].Value
-  }
+    [PSCustomObject]@{
+        'File Name' = $_.Groups[1].Value
+        'Sha256Sum' = $_.Groups[2].Value
+    }
 }
 
 $msiInfo = $results | Group-Object 'File Name' -AsHashTable
 $x86_msi, $x86_sha256 = $msiInfo['iiscompression_x86.msi'].'File Name', $msiInfo['iiscompression_x86.msi'].'Sha256Sum'
 $amd64_msi, $amd64_sha256 = $msiInfo['iiscompression_amd64.msi'].'File Name', $msiInfo['iiscompression_amd64.msi'].'Sha256Sum'
 
-# Update chocolateyinstall.ps1
-Write-Host "Updating Chocolatey Install Script"
-
+Write-Output "Updating Chocolatey Install Script"
 $urls = $urlMatches | ForEach-Object { $_.Value }
 $x86_url = $urls -match 'iiscompression_x86\.msi'
 $amd64_url = $urls -match 'iiscompression_amd64\.msi'
-
 $x86_msi_path = Join-Path -Path $TEMP -ChildPath $x86_msi
 $amd64_msi_path = Join-Path -Path $TEMP -ChildPath $amd64_msi
 
-function Download-FileWithRetry {
+function Get-FileWithRetry {
     param (
         [string]$Uri,
         [string]$OutFile,
         [int]$MaxRetries = 3,
         [int]$RetryDelaySeconds = 10
     )
-    
     for ($i = 1; $i -le $MaxRetries; $i++) {
         try {
             Write-Output "Attempt $i of $MaxRetries to download $Uri"
@@ -72,9 +77,9 @@ function Download-FileWithRetry {
 }
 
 Write-Output "Downloading x86 MSI..."
-Download-FileWithRetry -Uri $x86_url -OutFile $x86_msi_path
+Get-FileWithRetry -Uri $x86_url -OutFile $x86_msi_path
 Write-Output "Downloading x64 MSI..."
-Download-FileWithRetry -Uri $amd64_url -OutFile $amd64_msi_path
+Get-FileWithRetry -Uri $amd64_url -OutFile $amd64_msi_path
 
 $x86_hash = (Get-FileHash -Path $x86_msi_path -Algorithm SHA256).Hash
 $amd64_hash = (Get-FileHash -Path $amd64_msi_path -Algorithm SHA256).Hash
@@ -95,71 +100,65 @@ $amd64_hash = (Get-FileHash -Path $amd64_msi_path -Algorithm SHA256).Hash
 
 # Check if hashes match
 if ($x86_hash -eq $x86_sha256 -and $amd64_hash -eq $amd64_sha256) {
-  Write-Output "Downloads are valid & Hashes match."
-  
-  # Get version from MSI
-  $msiVersion = Get-MsiVersion -msiPath $x86_msi
-  
-  # Read nuspec file
-  [xml]$nuspecContent = Get-Content -Path "..\..\iis-compression.nuspec"
-  $nuspecVersion = $nuspecContent.package.metadata.version.Trim()
+    Write-Output "Downloads are valid & Hashes match."
+    $msiVersion = Get-MsiVersion -msiPath $x86_msi
+    [xml]$nuspecContent = Get-Content -Path "..\..\iis-compression.nuspec"
+    $nuspecVersion = $nuspecContent.package.metadata.version.Trim()
 
-  # Output versions
-  Write-Output "MSI Version: $msiVersion"
-  Write-Output "Nuspec Version: $nuspecVersion"
+    Write-Output "MSI Version: $msiVersion"
+    Write-Output "Nuspec Version: $nuspecVersion"
 
-  Write-Output "MSI Version has some extra chars, using regex..."
-  $msiVersion = $msiVersion -replace '(\d+)\.(\d+)\.0*(\d+)', '$1.$2.$3'
-  Write-Output "`tFixed version - $msiVersion"
+    Write-Output "MSI Version has some extra chars, using regex..."
+    $msiVersion = $msiVersion -replace '(\d+)\.(\d+)\.0*(\d+)', '$1.$2.$3'
+    Write-Output "`tFixed version - $msiVersion"
 
-  $packageUpdated = $false  # Changed to boolean and consistent naming
+    $packageUpdated = $false  # Changed to boolean and consistent naming
 
-  if ($msiVersion -eq $nuspecVersion) {
-    Write-Output "MSI and nuspec versions match."
-    $packageUpdated = $false
-  }
-  else {
-    Write-Output "MSI and nuspec versions do not match. Please update."
-    $packageUpdated = $true
-  }
+    if ($msiVersion -eq $nuspecVersion) {
+        Write-Output "MSI and nuspec versions match."
+        $packageUpdated = $false
+    }
+    else {
+        Write-Output "MSI and nuspec versions do not match. Please update."
+        $packageUpdated = $true
+    }
 
-  if ($packageUpdated) {
-    Write-Output "Updating nuspec file with new version $msiVersion"
-    $nuspecContent.package.metadata.version = $msiVersion
-    $nuspecContent.package.metadata.licenseUrl = $response.license.url
-    $nuspecContent.package.metadata.projectUrl = $response.html_url
-    $nuspecContent.package.metadata.requireLicenseAcceptance = $true
-    $nuspecContent.Save("..\..\iis-compression.nuspec")
-    Write-Output "Save completed."
+    if ($packageUpdated) {
+        Write-Output "Updating nuspec file with new version $msiVersion"
+        $nuspecContent.package.metadata.version = $msiVersion
+        $nuspecContent.package.metadata.licenseUrl = $response.license.url
+        $nuspecContent.package.metadata.projectUrl = $response.html_url
+        $nuspecContent.package.metadata.requireLicenseAcceptance = $true
+        $nuspecContent.Save("..\..\iis-compression.nuspec")
+        Write-Output "Save completed."
 
-    # update chocolateyinstall.ps1
-    $content = Get-Content -Path "..\..\tools\chocolateyinstall.ps1"
-    $content = $content -replace 'url = .*', "url = '$x86_url'"
-    $content = $content -replace 'url64 = .*', "url64 = '$amd64_url'"
-    $content = $content -replace 'checksum = .*', "checksum = '$x86_hash'"
-    $content = $content -replace 'checksum64 = .*', "checksum64 = '$amd64_hash'"
-    Set-Content -Path "..\..\tools\chocolateyinstall.ps1" -Value $content
+        # update chocolateyinstall.ps1
+        $content = Get-Content -Path "..\..\tools\chocolateyinstall.ps1"
+        $content = $content -replace 'url = .*', "url = '$x86_url'"
+        $content = $content -replace 'url64 = .*', "url64 = '$amd64_url'"
+        $content = $content -replace 'checksum = .*', "checksum = '$x86_hash'"
+        $content = $content -replace 'checksum64 = .*', "checksum64 = '$amd64_hash'"
+        Set-Content -Path "..\..\tools\chocolateyinstall.ps1" -Value $content
 
-    # Set environment variables with consistent naming
-    "x86_msi=$x86_msi" >> $env:GITHUB_ENV
-    "x86_sha256=$x86_sha256" >> $env:GITHUB_ENV
-    "x64_msi=$amd64_msi" >> $env:GITHUB_ENV
-    "amd64_sha256=$amd64_sha256" >> $env:GITHUB_ENV
-    "nuspec_version=$msiVersion" >> $env:GITHUB_ENV
-    "version=$msiVersion" >> $env:GITHUB_OUTPUT
-    
-    # Return true to indicate update was performed
-    Write-Output $true
-    exit 0
-  }
-  else {
-    Write-Output "There is no need to update, exiting."
-    Write-Output $false
-    exit 0
-  }
+        # Set environment variables with consistent naming
+        "x86_msi=$x86_msi" >> $env:GITHUB_ENV
+        "x86_sha256=$x86_sha256" >> $env:GITHUB_ENV
+        "x64_msi=$amd64_msi" >> $env:GITHUB_ENV
+        "amd64_sha256=$amd64_sha256" >> $env:GITHUB_ENV
+        "nuspec_version=$msiVersion" >> $env:GITHUB_ENV
+        "version=$msiVersion" >> $env:GITHUB_OUTPUT
+
+        Write-Output $true
+        exit 0
+    }
+    else {
+        Write-Output "There is no need to update, exiting."
+        Write-Output $false
+        exit 0
+    }
 }
 else {
-  Write-Output "Hashes do not match downloads. Please try downloading again."
-  Write-Output "Exiting with failure code."
-  exit 1
+    Write-Output "Hashes do not match downloads. Please try downloading again."
+    Write-Output "Exiting with failure code."
+    exit 1
 }
