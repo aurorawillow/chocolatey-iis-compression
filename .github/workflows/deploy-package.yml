@@ -30,7 +30,7 @@ jobs:
       run: |
         try {
           [xml]$nuspec = Get-Content -Path "iis-compression.nuspec"
-          $version = $nuspec.package.metadata.version
+          $version = $nuspec.package.metadata.version.Trim()  # Trim whitespace and unwanted characters
           Write-Host "Deploying version: $version"
           echo "PACKAGE_VERSION=$version" >> $env:GITHUB_ENV
         }
