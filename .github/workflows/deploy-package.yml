@@ -34,9 +34,10 @@ jobs:
       run: |
         try {
           [xml]$nuspec = Get-Content -Path "iis-compression.nuspec"
-          $version = $nuspec.package.metadata.version.Trim()  # Trim whitespace and unwanted characters
+          $version = $nuspec.package.metadata.version.Trim()
           Write-Host "Deploying version: $version"
-          echo "PACKAGE_VERSION=$version" >> $env:GITHUB_ENV
+          "PACKAGE_VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append
+          Write-Host "Environment variable set successfully"
         }
         catch {
           Write-Error "Failed to read nuspec version: $_"
@@ -86,8 +87,12 @@ jobs:
       if: success()
       run: |
         try {
-          choco push iis-compression.nupkg --source "https://push.chocolatey.org/"
-          Write-Host "Successfully pushed version ${{ env.PACKAGE_VERSION }} to Chocolatey"
+          $packageFile = "iis-compression.$env:PACKAGE_VERSION.nupkg"
+          if (-not (Test-Path $packageFile)) {
+            throw "Package file not found: $packageFile"
+          }
+          choco push $packageFile --source "https://push.chocolatey.org/"
+          Write-Host "Successfully pushed version $env:PACKAGE_VERSION to Chocolatey"
         }
         catch {
           Write-Error "Failed to push package to Chocolatey: $_"
