@@ -25,7 +25,7 @@ jobs:
       id: update-script
       run: |
         try {
-          $result = ./update-package.ps1
+          $result = ./Update-Package.ps1
           if ($LASTEXITCODE -eq 0 -and $result -eq $true) {
             echo "PACKAGE_UPDATED=true" >> $env:GITHUB_ENV
             echo "version=$env:nuspec_version" >> $env:GITHUB_OUTPUT
