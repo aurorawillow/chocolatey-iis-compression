@@ -7,6 +7,8 @@ calculates the SHA256 hash, extracts the version number, and updates the nuspec 
 It is intended to be run as part of a GitHub workflow to keep the package up-to-date.
 .LINK
 https://github.com/microsoft/IIS.Compression
+.NOTES
+$env:GITHUB_OUTPUT provides path on the runner to the file that sets the current step's outputs from workflow commands.
 #>
 
 $TEMP = [System.IO.Path]::GetTempPath()
@@ -141,12 +143,12 @@ if ($x86_hash -eq $x86_sha256 -and $amd64_hash -eq $amd64_sha256) {
         Set-Content -Path "..\..\tools\chocolateyinstall.ps1" -Value $content
 
         # Set environment variables with consistent naming
-        "x86_msi=$x86_msi" >> $env:GITHUB_ENV
-        "x86_sha256=$x86_sha256" >> $env:GITHUB_ENV
-        "x64_msi=$amd64_msi" >> $env:GITHUB_ENV
-        "amd64_sha256=$amd64_sha256" >> $env:GITHUB_ENV
-        "nuspec_version=$msiVersion" >> $env:GITHUB_ENV
-        "version=$msiVersion" >> $env:GITHUB_OUTPUT
+        "x86_msi=$x86_msi" | Out-File -FilePath $env:GITHUB_ENV -Append
+        "x86_sha256=$x86_sha256" | Out-File -FilePath $env:GITHUB_ENV -Append
+        "x64_msi=$amd64_msi" | Out-File -FilePath $env:GITHUB_ENV -Append
+        "amd64_sha256=$amd64_sha256" | Out-File -FilePath $env:GITHUB_ENV -Append
+        "nuspec_version=$msiVersion" | Out-File -FilePath $env:GITHUB_ENV -Append
+        "version=$msiVersion" | Out-File -FilePath $env:GITHUB_ENV -Append
 
         Write-Output $true
         exit 0
