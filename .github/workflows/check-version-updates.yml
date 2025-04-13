@@ -67,7 +67,14 @@ jobs:
       run: |
         try {
           choco pack
-          choco install iis-compression -y -s .
+          $packageVersion = "${{ steps.update-script.outputs.version }}"
+          $nupkgFile = "iis-compression.$packageVersion.nupkg"
+          if (-not (Test-Path $nupkgFile)) {
+            throw "Failed to create nupkg file: $nupkgFile"
+          }
+          Write-Host "Successfully created $nupkgFile"
+
+          choco install iis-compression -y -s . --version "$packageVersion"
           if (-not (Test-Path "$env:ProgramFiles\IIS\IIS Compression\iisbrotli.dll")) {
             throw "Installation failed: iisbrotli.dll not found"
           }
