@@ -85,6 +85,8 @@ jobs:
 
     - name: Push Package
       if: success()
+      env:
+        PACKAGE_VERSION: ${{ env.PACKAGE_VERSION }}
       run: |
         try {
           $packageFile = "iis-compression.$env:PACKAGE_VERSION.nupkg"
@@ -101,6 +103,8 @@ jobs:
 
     - name: Create Release
       if: success()
+      env:
+        PACKAGE_VERSION: ${{ env.PACKAGE_VERSION }}
       uses: softprops/action-gh-release@v2
       with:
         name: "v${{ env.PACKAGE_VERSION }}"
