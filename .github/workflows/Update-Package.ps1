@@ -87,14 +87,14 @@ $x86_hash = (Get-FileHash -Path $x86_msi_path -Algorithm SHA256).Hash
 $amd64_hash = (Get-FileHash -Path $amd64_msi_path -Algorithm SHA256).Hash
 
 function Get-MsiVersion {
-  param ([string]$msiPath)
-  $msiPath = Join-Path -Path $TEMP -ChildPath $msiPath
-  $windowsInstaller = New-Object -ComObject WindowsInstaller.Installer
-  $database = $windowsInstaller.OpenDatabase($msiPath, 0)
-  $view = $database.OpenView("SELECT `Value` FROM `Property` WHERE `Property` = 'ProductVersion'")
-  $view.Execute()
-  $record = $view.Fetch()
-  return $record.StringData(1)
+    param ([string]$msiPath)
+    $msiPath = Join-Path -Path $TEMP -ChildPath $msiPath
+    $windowsInstaller = New-Object -ComObject WindowsInstaller.Installer
+    $database = $windowsInstaller.OpenDatabase($msiPath, 0)
+    $view = $database.OpenView("SELECT `Value` FROM `Property` WHERE `Property` = 'ProductVersion'")
+    $view.Execute()
+    $record = $view.Fetch()
+    return $record.StringData(1)
 }
 
 $x86_hash = (Get-FileHash -Path $x86_msi_path -Algorithm SHA256).Hash
