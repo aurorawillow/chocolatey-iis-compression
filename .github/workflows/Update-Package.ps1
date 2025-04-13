@@ -1,4 +1,4 @@
-﻿#
+﻿<#
 .SYNOPSIS
 Updates the IIS Compression Chocolatey package with the latest version.
 .DESCRIPTION
