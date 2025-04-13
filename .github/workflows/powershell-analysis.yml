@@ -3,8 +3,14 @@ name: "PowerShell Analysis"
 on:
   push:
     branches: [ "main" ]
+    paths:
+      - '**/*.ps1'
+      - '.github/workflows/powershell-analysis.yml'
   pull_request:
     branches: [ "main" ]
+    paths:
+      - '**/*.ps1'
+      - '.github/workflows/powershell-analysis.yml'
   schedule:
     - cron: '30 1 * * 0'  # Run at 01:30 UTC every Sunday
 

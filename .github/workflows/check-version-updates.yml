@@ -1,5 +1,11 @@
 name: Check Version Updates
 on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - '**/*.nuspec'
+      - '**/*.ps1'
+      - '.github/workflows/check-version-updates.yml'
   schedule:
     - cron: '0 0 1 * *'  # Run on the 1st of every month
   workflow_dispatch:  # Allow manual trigger
