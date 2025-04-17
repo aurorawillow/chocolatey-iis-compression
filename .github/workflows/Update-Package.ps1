@@ -32,8 +32,21 @@ Write-Output "✓ Package version: $version"
 
 $response = Invoke-RestMethod -Uri 'https://api.github.com/repos/microsoft/IIS.Compression/releases/latest'
 $bodyContent = $response.body
+
+# Extract file names and hashes from markdown table in release body
 $fileNameMatches = [regex]::Matches($bodyContent, '\|\s*(.*?)\s*\|\s*(.*?)\s*\|')
 $urlMatches = [regex]::Matches($bodyContent, 'https://download\.microsoft\.com/download/[^\s]*\.msi')
+
+# Error handling for missing matches
+if ($fileNameMatches.Count -lt 3) {
+    Write-Error "Could not find expected MSI file name and hash entries in release body."
+    exit 1
+}
+if ($urlMatches.Count -lt 2) {
+    Write-Error "Could not find expected MSI URLs in release body."
+    exit 1
+}
+
 $results = $fileNameMatches | ForEach-Object {
     [PSCustomObject]@{
         'File Name' = $_.Groups[1].Value
@@ -42,13 +55,25 @@ $results = $fileNameMatches | ForEach-Object {
 }
 
 $msiInfo = $results | Group-Object 'File Name' -AsHashTable
+
+# Defensive assignment with error handling
+if (-not $msiInfo.ContainsKey('iiscompression_x86.msi') -or -not $msiInfo.ContainsKey('iiscompression_amd64.msi')) {
+    Write-Error "Could not find both x86 and amd64 MSI entries in parsed results."
+    exit 1
+}
 $x86_msi, $x86_sha256 = $msiInfo['iiscompression_x86.msi'].'File Name', $msiInfo['iiscompression_x86.msi'].'Sha256Sum'
 $amd64_msi, $amd64_sha256 = $msiInfo['iiscompression_amd64.msi'].'File Name', $msiInfo['iiscompression_amd64.msi'].'Sha256Sum'
 
 Write-Output "Updating Chocolatey Install Script"
 $urls = $urlMatches | ForEach-Object { $_.Value }
-$x86_url = $urls -match 'iiscompression_x86\.msi'
-$amd64_url = $urls -match 'iiscompression_amd64\.msi'
+$x86_url = $urls | Where-Object { $_ -match 'iiscompression_x86\.msi' }
+$amd64_url = $urls | Where-Object { $_ -match 'iiscompression_amd64\.msi' }
+
+if (-not $x86_url -or -not $amd64_url) {
+    Write-Error "Could not extract both x86 and amd64 MSI URLs."
+    exit 1
+}
+
 $x86_msi_path = Join-Path -Path $TEMP -ChildPath $x86_msi
 $amd64_msi_path = Join-Path -Path $TEMP -ChildPath $amd64_msi
 
@@ -128,7 +153,7 @@ if ($x86_hash -eq $x86_sha256 -and $amd64_hash -eq $amd64_sha256) {
     if ($packageUpdated) {
         Write-Output "Updating nuspec file with new version $msiVersion"
         $nuspecContent.package.metadata.version = $msiVersion
-        $nuspecContent.package.metadata.licenseUrl = $response.license.url
+        $nuspecContent.package.metadata.licenseUrl = "https://raw.githubusercontent.com/microsoft/IIS.Compression/refs/heads/main/LICENSE"
         $nuspecContent.package.metadata.projectUrl = $response.html_url
         $nuspecContent.package.metadata.requireLicenseAcceptance = $true
         $nuspecContent.Save("..\..\iis-compression.nuspec")
