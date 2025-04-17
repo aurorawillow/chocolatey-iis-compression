@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Runs validation checks for the repository.
 
