@@ -35,6 +35,9 @@ jobs:
         try {
           [xml]$nuspec = Get-Content -Path "iis-compression.nuspec"
           $version = $nuspec.package.metadata.version.Trim()
+          if ([string]::IsNullOrWhiteSpace($version)) {
+            throw "The <version> element in iis-compression.nuspec is missing or empty. Please update the version before merging."
+          }
           Write-Host "Deploying version: $version"
           "PACKAGE_VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append
           Write-Host "Environment variable set successfully"
