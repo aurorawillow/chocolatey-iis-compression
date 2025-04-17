@@ -97,7 +97,7 @@ jobs:
           if (-not (Test-Path $packageFile)) {
             throw "Package file not found: $packageFile"
           }
-          choco push $packageFile --source "https://push.chocolatey.org/"
+          choco push $packageFile --source "https://chocolatey.org/"
           Write-Host "Successfully pushed version $env:PACKAGE_VERSION to Chocolatey"
         }
         catch {
