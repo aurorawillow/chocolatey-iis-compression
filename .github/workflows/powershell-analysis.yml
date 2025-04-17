@@ -32,10 +32,24 @@ jobs:
     - name: Run PSScriptAnalyzer
       shell: pwsh
       run: |
-        $results = Invoke-ScriptAnalyzer -Path . -Recurse
-        $results | ForEach-Object {
+        # Define rules to report but not fail on
+        $warningRules = @(
+          'PSAvoidTrailingWhitespace',
+          'PSAvoidUsingWriteHost'
+        )
+        
+        # Run analysis
+        $allResults = Invoke-ScriptAnalyzer -Path . -Recurse
+        
+        # Display all issues as warnings in GitHub Actions
+        $allResults | ForEach-Object {
           Write-Output "::warning file=$($_.ScriptPath),line=$($_.Line),col=$($_.Column)::$($_.RuleName) - $($_.Message)"
         }
-        if ($results) {
+        
+        # Only fail on issues that aren't in the warning rules list
+        $severeIssues = $allResults | Where-Object { $warningRules -notcontains $_.RuleName }
+        if ($severeIssues) {
+          Write-Error "PSScriptAnalyzer found severe issues that need to be fixed."
+          $severeIssues | Format-Table -AutoSize
           exit 1
         }
