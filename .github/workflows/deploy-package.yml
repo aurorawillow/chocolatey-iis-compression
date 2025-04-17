@@ -48,7 +48,29 @@ jobs:
           exit 1
         }
 
+    - name: Check if Version Exists on Chocolatey
+      id: check_version
+      run: |
+        $version = "${{ env.PACKAGE_VERSION }}"
+        $url = "https://community.chocolatey.org/api/v2/package/iis-compression/$version"
+        try {
+          $response = Invoke-WebRequest -Uri $url -Method Head -UseBasicParsing -ErrorAction Stop
+          Write-Host "Package version $version already exists on Chocolatey."
+          "SHOULD_DEPLOY=false" | Out-File -FilePath $env:GITHUB_ENV -Append
+        }
+        catch {
+          if ($_.Exception.Response.StatusCode.value__ -eq 404) {
+            Write-Host "Package version $version does not exist on Chocolatey. Proceeding with deployment."
+            "SHOULD_DEPLOY=true" | Out-File -FilePath $env:GITHUB_ENV -Append
+          }
+          else {
+            Write-Error "Failed to check package version: $_"
+            exit 1
+          }
+        }
+
     - name: Add API Key
+      if: env.SHOULD_DEPLOY == 'true'
       run: |
         try {
           choco apikey add --source "https://chocolatey.org/" --key "${{ secrets.CHOCO_API_KEY }}"
@@ -60,6 +82,7 @@ jobs:
         }
 
     - name: Pack Package
+      if: env.SHOULD_DEPLOY == 'true'
       run: |
         try {
           choco pack
@@ -71,6 +94,7 @@ jobs:
         }
 
     - name: Test Package Installation
+      if: env.SHOULD_DEPLOY == 'true'
       run: |
         try {
           choco install iis-compression -y -s .
@@ -88,7 +112,7 @@ jobs:
         }
 
     - name: Push Package
-      if: success()
+      if: success() && env.SHOULD_DEPLOY == 'true'
       env:
         PACKAGE_VERSION: ${{ env.PACKAGE_VERSION }}
       run: |
@@ -106,7 +130,7 @@ jobs:
         }
 
     - name: Create Release
-      if: success()
+      if: success() && env.SHOULD_DEPLOY == 'true'
       env:
         PACKAGE_VERSION: ${{ env.PACKAGE_VERSION }}
       uses: softprops/action-gh-release@v2
