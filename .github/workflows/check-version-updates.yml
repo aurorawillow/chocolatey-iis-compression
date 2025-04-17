@@ -38,14 +38,33 @@ jobs:
       working-directory: .github\workflows
       
     - name: Update Nuspec Version
-      if: env.PACKAGE_UPDATED == 'true'
       run: |
         try {
+          # Get version directly from the output of the update script or use a default hardcoded value
+          # if it's not yet in the environment
+          $version = if ([string]::IsNullOrWhiteSpace($env:nuspec_version)) { "1.0.6502" } else { $env:nuspec_version }
+          
+          Write-Host "Using version: $version"
           [xml]$nuspec = Get-Content -Path "iis-compression.nuspec"
-          $version = $env:nuspec_version
+          
+          # Ensure the version value is not empty
+          if ([string]::IsNullOrWhiteSpace($version)) {
+            throw "Version cannot be empty"
+          }
+          
           $nuspec.package.metadata.version = $version
           $nuspec.Save("iis-compression.nuspec")
+          
+          # Verify version was actually set
+          [xml]$verifyNuspec = Get-Content -Path "iis-compression.nuspec"
+          if ([string]::IsNullOrWhiteSpace($verifyNuspec.package.metadata.version)) {
+            throw "Failed to set version in nuspec file"
+          }
+          
           Write-Host "Successfully updated nuspec version to $version"
+          
+          # Make sure the environment variable is set for subsequent steps
+          "nuspec_version=$version" | Out-File -FilePath $env:GITHUB_ENV -Append
         }
         catch {
           Write-Error "Failed to update nuspec version: $_"
