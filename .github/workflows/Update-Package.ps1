@@ -164,3 +164,24 @@ else {
     Write-Output "Exiting with failure code."
     exit 1
 }
+
+try {
+  $packageFile = "iis-compression.$env:PACKAGE_VERSION.nupkg"
+  if (-not (Test-Path $packageFile)) {
+    throw "Package file not found: $packageFile"
+  }
+  
+  # Use the same URL for push as was used for setting the API key
+  $result = choco push $packageFile --source "https://chocolatey.org/"
+  
+  # Check if the command was successful
+  if ($LASTEXITCODE -ne 0) {
+    throw "Push command failed with exit code $LASTEXITCODE. Output: $result"
+  }
+  
+  Write-Host "Successfully pushed version $env:PACKAGE_VERSION to Chocolatey"
+}
+catch {
+  Write-Error "Failed to push package to Chocolatey: $_"
+  exit 1
+}
