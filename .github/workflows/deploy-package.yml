@@ -54,7 +54,7 @@ jobs:
         $version = "${{ env.PACKAGE_VERSION }}"
         $url = "https://community.chocolatey.org/api/v2/package/iis-compression/$version"
         try {
-          $response = Invoke-WebRequest -Uri $url -Method Head -UseBasicParsing -ErrorAction Stop
+          $response = Invoke-WebRequest -Uri $url -Method Get -UseBasicParsing -ErrorAction Stop
           Write-Host "Package version $version already exists on Chocolatey."
           "SHOULD_DEPLOY=false" | Out-File -FilePath $env:GITHUB_ENV -Append
         }
