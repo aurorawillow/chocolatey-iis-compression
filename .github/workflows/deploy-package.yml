@@ -133,7 +133,7 @@ jobs:
       if: success() && env.SHOULD_DEPLOY == 'true'
       env:
         PACKAGE_VERSION: ${{ env.PACKAGE_VERSION }}
-      uses: softprops/action-gh-release@v2
+      uses: softprops/action-gh-release@v3
       with:
         name: "v${{ env.PACKAGE_VERSION }}"
         tag_name: "v${{ env.PACKAGE_VERSION }}"
